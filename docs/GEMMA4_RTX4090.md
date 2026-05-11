@@ -57,7 +57,9 @@ python3 scripts/probe_gemma4_context.py --base-url http://127.0.0.1:18191 --ctx 
 Current RTX 4090 measurements:
 
 - `40960` context, q8_0 K/V, MTP draft 4, prompt cache disabled: 3-run verifier passed with minimum `63.78 tok/s` and average `75.10 tok/s`.
+- `40960` context was restored after the higher-context attempts and passed a fresh verifier run at `63.97 tok/s`.
 - `40960` context, q8_0 K/V long-context chat probe through about `38955` prompt tokens completed successfully, with decode speed dropping to `16.12 tok/s` at the top end.
+- `49152` context, q8_0 K/V, MTP draft 4, default `-b 2048 -ub 512`: loaded and answered, but failed the speed gate with minimum `2.50 tok/s` and average `2.91 tok/s`.
 - `65536` context, q8_0 K/V, MTP draft 4, `-b 512 -ub 128`: loaded and answered, but only reached `5.58 tok/s`.
 - `65536` context, q8_0 K/V, MTP draft 1, `-b 512 -ub 128`: loaded and answered, but only reached `33.35 tok/s`.
 - Earlier `65536` attempts with the normal `-ub 512` path loaded q8_0 K/V but failed first generation with CUDA OOM in the MTP flash-attention path.

@@ -52,7 +52,8 @@ $effectiveDraftCacheTypeV = if ($DraftCacheTypeV -ne '') { $DraftCacheTypeV } el
 
 function ConvertTo-BashSingleQuoted {
     param([string] $Value)
-    "'" + ($Value -replace "'", "'\"'\"'") + "'"
+    $singleQuote = [char]39
+    $singleQuote + ($Value -replace $singleQuote, ($singleQuote + '"' + $singleQuote + '"' + $singleQuote)) + $singleQuote
 }
 
 function Get-LuceboxEnvPrefix {
