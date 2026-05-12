@@ -8,16 +8,16 @@ set -euo pipefail
 # Qwen/Laguna graphs; Gemma 4 support needs libllama's Gemma 4 + MTP runtime.
 
 MODEL="${LUCEBOX_GEMMA4_MODEL:-/mnt/c/Users/adyba/Downloads/gemma-4-31B-it-abliterated-Q4_K_M.gguf}"
-MTP_MODEL="${LUCEBOX_GEMMA4_MTP_MODEL:-/home/tdamre/models/gemma-4-31B-it-assistant-atomic-Q4_K_M.gguf}"
+MTP_MODEL="${LUCEBOX_GEMMA4_MTP_MODEL:-/home/tdamre/models/AtomicChat-gemma-4-31B-it-assistant-GGUF/gemma-4-31B-it-assistant.Q4_K_S.gguf}"
 LLAMA_SERVER="${LUCEBOX_LLAMA_SERVER:-/home/tdamre/src/atomic-llama-cpp-turboquant/build-cuda124/bin/llama-server}"
 MTP_STYLE="${LUCEBOX_GEMMA4_MTP_STYLE:-atomic}"
 
 HOST="${LUCEBOX_GEMMA4_HOST:-127.0.0.1}"
 PORT="${LUCEBOX_GEMMA4_PORT:-18191}"
-CTX_SIZE="${LUCEBOX_GEMMA4_CTX_SIZE:-71680}"
+CTX_SIZE="${LUCEBOX_GEMMA4_CTX_SIZE:-70080}"
 DRAFT_CTX_SIZE="${LUCEBOX_GEMMA4_DRAFT_CTX_SIZE:-2048}"
 DRAFT_N_MAX="${LUCEBOX_GEMMA4_DRAFT_N_MAX:-4}"
-DRAFT_BLOCK_SIZE="${LUCEBOX_GEMMA4_DRAFT_BLOCK_SIZE:-3}"
+DRAFT_BLOCK_SIZE="${LUCEBOX_GEMMA4_DRAFT_BLOCK_SIZE:-4}"
 BATCH_SIZE="${LUCEBOX_GEMMA4_BATCH_SIZE:-2048}"
 UBATCH_SIZE="${LUCEBOX_GEMMA4_UBATCH_SIZE:-512}"
 CACHE_TYPE_K="${LUCEBOX_GEMMA4_CACHE_TYPE_K:-turbo4}"

@@ -10,15 +10,17 @@ Default workstation paths:
 
 ```bash
 LUCEBOX_GEMMA4_MODEL=/mnt/c/Users/adyba/Downloads/gemma-4-31B-it-abliterated-Q4_K_M.gguf
-LUCEBOX_GEMMA4_MTP_MODEL=/home/tdamre/models/gemma-4-31B-it-assistant-atomic-Q4_K_M.gguf
+LUCEBOX_GEMMA4_MTP_MODEL=/home/tdamre/models/AtomicChat-gemma-4-31B-it-assistant-GGUF/gemma-4-31B-it-assistant.Q4_K_S.gguf
 LUCEBOX_LLAMA_SERVER=/home/tdamre/src/atomic-llama-cpp-turboquant/build-cuda124/bin/llama-server
 ```
 
 The assistant GGUF above was reconverted from the cached
 `google/gemma-4-31B-it-assistant` snapshot with Atomic's converter so its
 metadata uses the `gemma4_assistant` architecture expected by `--mtp-head`,
-then quantized to Q4_K_M with Atomic's `llama-quantize`. The F16 intermediate
-is kept at `/home/tdamre/models/gemma-4-31B-it-assistant-atomic-f16.gguf`.
+then quantized for MTP serving. The default now uses AtomicChat's prebuilt
+Q4_K_S GGUF because it is the best measured 70k throughput variant on this
+RTX 4090. The locally converted F16 intermediate is kept at
+`/home/tdamre/models/gemma-4-31B-it-assistant-atomic-f16.gguf`.
 
 Start from Windows PowerShell:
 
@@ -40,13 +42,13 @@ The server listens on `http://127.0.0.1:18191` by default and exposes
 OpenAI-compatible `/v1/chat/completions` plus llama.cpp `/completion`.
 The launcher sets `--reasoning off` so OpenAI chat replies populate
 `message.content` by default. The default launcher profile uses Atomic's
-`--mtp-head` path with TurboQuant `turbo4` K/V and block-size-3 MTP:
+`--mtp-head` path with TurboQuant `turbo4` K/V and block-size-4 MTP:
 
 ```bash
 LUCEBOX_GEMMA4_MTP_STYLE=atomic
-LUCEBOX_GEMMA4_CTX_SIZE=71680
+LUCEBOX_GEMMA4_CTX_SIZE=70080
 LUCEBOX_GEMMA4_DRAFT_CTX_SIZE=2048
-LUCEBOX_GEMMA4_DRAFT_BLOCK_SIZE=3
+LUCEBOX_GEMMA4_DRAFT_BLOCK_SIZE=4
 LUCEBOX_GEMMA4_CACHE_TYPE_K=turbo4
 LUCEBOX_GEMMA4_CACHE_TYPE_V=turbo4
 LUCEBOX_GEMMA4_DRAFT_CACHE_TYPE_K=turbo4
@@ -87,8 +89,12 @@ Current RTX 4090 measurements:
 - `71680` context, Atomic TurboQuant `turbo4` K/V, Gemma 4 assistant via `--mtp-head`, `--draft-block-size 3`, reached `58.10 tok/s` on a 128-token verifier and `59.01 tok/s` on a 512-token verifier, with `335/350` MTP draft tokens accepted on the longer run. This is the best measured 70k launcher recipe so far, but it remains below the requested `70 tok/s` hard gate.
 - Raising the graphics clock floor to `2520 MHz` and testing `--poll 100 --poll-batch 1 --prio 2 --prio-batch 3` did not improve the `71680`/`turbo4`/block-size-3 profile; the 128-token poll/priority run reached `57.67 tok/s`.
 - Quantizing the assistant head from F16 (`911 MiB`) to Q4_K_M (`338 MiB`) reduced loaded VRAM by about `250 MiB` at `71680` context and let the first 128-token verifier prompt pass the `70 tok/s` gate at `73.74 tok/s`. A 3-run verifier was still not stable above the gate, with `54.52 tok/s` minimum and `62.68 tok/s` average across the three fixed prompts.
-- A Q8_0 assistant (`491 MiB`) was slower than Q4_K_M on the same 3-run verifier: `51.12 tok/s` minimum and `58.23 tok/s` average. Q4_K_M remains the best measured assistant variant.
-- With the Q4_K_M assistant as the default, a corrected `71680` context probe using a `70034`-token chat prompt completed successfully: prompt processing was `1457.52 tok/s`, decode was `37.17 tok/s`, and MTP accepted `37/51` draft tokens. This confirms the default turbo4 path answers at 70k tokens, but fully populated 70k-context decode remains below the requested `70 tok/s` gate.
+- A Q8_0 assistant (`491 MiB`) was slower than Q4_K_M on the same 3-run verifier: `51.12 tok/s` minimum and `58.23 tok/s` average.
+- With the Q4_K_M assistant, a corrected `71680` context probe using a `70034`-token chat prompt completed successfully: prompt processing was `1457.52 tok/s`, decode was `37.17 tok/s`, and MTP accepted `37/51` draft tokens. This confirmed the turbo4 path answers at 70k tokens, but fully populated 70k-context decode remains below the requested `70 tok/s` gate.
+- Tightening the context from `71680` to `70080` while preserving a 70k+ usable window improved the Q4_K_M assistant 128-token verifier minimum to `56.13 tok/s` and average to `64.15 tok/s` at block size 3.
+- AtomicChat's Q4_K_S assistant at `70080` context with `--draft-block-size 4` is the current best measured 70k recipe: a 3-run 128-token verifier reached `56.31 tok/s` minimum and `68.01 tok/s` average, while a 3-run 512-token verifier reached `60.49 tok/s` minimum and `71.09 tok/s` average. It still does not satisfy the strict every-run `70 tok/s` gate.
+- The same Q4_K_S/block-size-4 profile answered a `70034`-token chat prompt at `70080` context: prompt processing was `1373.00 tok/s`, decode was `37.92 tok/s`, and MTP accepted `41/64` draft tokens.
+- AtomicChat Q4_K_M was slightly worse than Q4_K_S at `70080` context (`55.04 tok/s` minimum, `63.04 tok/s` average on the 128-token verifier). AtomicChat Q5_K_M was also worse on the 512-token verifier (`59.05 tok/s` minimum, `69.35 tok/s` average).
 - `71680` context cold-prefill stability probe with a `70035`-token chat prompt completed successfully: prompt processing was `1292.04 tok/s`, decode was `23.51 tok/s`, and MTP accepted `19/31` draft tokens. This confirms the 70k prompt can answer on the Atomic TurboQuant path, but not at the requested decode floor.
 - `71680` context probe with a `65590`-token chat prompt also completed successfully: prompt processing was `1298.25 tok/s`, decode was `29.05 tok/s`, and MTP accepted `21/30` draft tokens.
 - `65536` context, Atomic TurboQuant `turbo4` K/V, `--draft-block-size 6`: loaded and answered at `22.31 tok/s`; acceptance dropped to `78/234`.
