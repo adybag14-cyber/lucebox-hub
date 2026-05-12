@@ -60,13 +60,13 @@ LUCEBOX_GEMMA4_NO_KV_OFFLOAD=0
 Verify the reply path and single-stream decode floor:
 
 ```bash
-python3 scripts/verify_gemma4_4090.py --base-url http://127.0.0.1:18191 --threshold 60
+python3 scripts/verify_gemma4_4090.py --base-url http://127.0.0.1:18191 --threshold 70
 ```
 
 Probe long-context chat stability:
 
 ```bash
-python3 scripts/probe_gemma4_context.py --base-url http://127.0.0.1:18191 --ctx 40960 --targets 8192,16384,32768,38912
+python3 scripts/probe_gemma4_context.py --base-url http://127.0.0.1:18191 --ctx 70080 --targets 70000 --cache-type-k turbo4 --cache-type-v turbo4 --max-tokens 64
 ```
 
 Current RTX 4090 measurements:
@@ -100,6 +100,8 @@ Current RTX 4090 measurements:
 - Increasing `-ub` to `1024` did not materially improve the same profile (`56.58 tok/s` minimum and `68.07 tok/s` average). Reducing logical batch to `-b 1024 -ub 1024` was worse (`54.63 tok/s` minimum and `65.97 tok/s` average).
 - Disabling continuous batching through `LLAMA_ARG_CONT_BATCHING=false` was only a small improvement on the 128-token verifier (`56.70 tok/s` minimum and `68.35 tok/s` average); the 1024-token verifier still missed the floor (`57.77 tok/s` minimum and `68.80 tok/s` average).
 - Request-level `backend_sampling=true` also stayed below the floor (`56.92 tok/s` minimum and `68.29 tok/s` average). Forcing cuBLAS 16F compute and raising the GPU clock floor to `2520 MHz` were both worse than the default run.
+- A fresh default May 12 re-run of the Q4_K_S/block-size-4 `70080` profile still failed the hard `70 tok/s` every-run gate: `51.52 tok/s` minimum and `63.79 tok/s` average across the three fixed 128-token verifier prompts. MTP acceptance was prompt-dependent (`93/102`, `74/158`, and `77/150`).
+- Disabling the MTP depth-2 pipeline with `LLAMA_PIPELINE_DEPTH2=0` did not fix the low-acceptance prompts: the same 128-token verifier reached only `53.37 tok/s` minimum and `65.08 tok/s` average. Raising MTP draft block size to 5 was clearly worse (`43.16 tok/s` minimum and `49.90 tok/s` average).
 - `71680` context cold-prefill stability probe with a `70035`-token chat prompt completed successfully: prompt processing was `1292.04 tok/s`, decode was `23.51 tok/s`, and MTP accepted `19/31` draft tokens. This confirms the 70k prompt can answer on the Atomic TurboQuant path, but not at the requested decode floor.
 - `71680` context probe with a `65590`-token chat prompt also completed successfully: prompt processing was `1298.25 tok/s`, decode was `29.05 tok/s`, and MTP accepted `21/30` draft tokens.
 - `65536` context, Atomic TurboQuant `turbo4` K/V, `--draft-block-size 6`: loaded and answered at `22.31 tok/s`; acceptance dropped to `78/234`.
