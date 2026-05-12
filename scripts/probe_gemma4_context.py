@@ -12,10 +12,11 @@ import urllib.request
 from typing import Any
 
 
-UNIT = (
-    "Lucebox q8_0 key cache and q8_0 value cache stability marker for RTX 4090 "
-    "CUDA flash attention and Gemma 4 MTP decoding. "
-)
+def marker_unit(cache_type_k: str, cache_type_v: str) -> str:
+    return (
+        f"Lucebox {cache_type_k} key cache and {cache_type_v} value cache "
+        "stability marker for RTX 4090 CUDA flash attention and Gemma 4 MTP decoding. "
+    )
 
 
 def post_json(base_url: str, path: str, payload: dict[str, Any], timeout: float) -> dict[str, Any]:
@@ -61,26 +62,38 @@ def tokenize(base_url: str, content: str, timeout: float) -> int:
     return len(tokens)
 
 
-def build_prompt(base_url: str, target_tokens: int, timeout: float) -> tuple[str, int]:
-    unit_tokens = max(1, tokenize(base_url, UNIT, timeout))
+def build_prompt(base_url: str, target_tokens: int, timeout: float, unit: str) -> tuple[str, int]:
+    unit_tokens = max(1, tokenize(base_url, unit, timeout))
     repetitions = max(1, target_tokens // unit_tokens)
-    prompt = UNIT * repetitions
+    prompt = unit * repetitions
     count = tokenize(base_url, prompt, timeout)
 
     while count < target_tokens:
-        prompt += UNIT * max(1, (target_tokens - count) // unit_tokens)
+        prompt += unit * max(1, (target_tokens - count) // unit_tokens)
         count = tokenize(base_url, prompt, timeout)
 
     while repetitions > 1 and count > target_tokens + unit_tokens:
         repetitions -= max(1, (count - target_tokens) // unit_tokens)
-        prompt = UNIT * repetitions
+        prompt = unit * repetitions
         count = tokenize(base_url, prompt, timeout)
 
     return prompt, count
 
 
-def run_target(base_url: str, target_tokens: int, max_tokens: int, timeout: float) -> dict[str, Any]:
-    prompt, raw_user_tokens = build_prompt(base_url, target_tokens, timeout)
+def run_target(
+    base_url: str,
+    target_tokens: int,
+    max_tokens: int,
+    timeout: float,
+    cache_type_k: str,
+    cache_type_v: str,
+) -> dict[str, Any]:
+    prompt, raw_user_tokens = build_prompt(
+        base_url,
+        target_tokens,
+        timeout,
+        marker_unit(cache_type_k, cache_type_v),
+    )
     data = post_json(
         base_url,
         "/v1/chat/completions",
@@ -91,7 +104,10 @@ def run_target(base_url: str, target_tokens: int, max_tokens: int, timeout: floa
                     "role": "user",
                     "content": (
                         prompt
-                        + "\nReturn five concise numbered observations confirming whether the q8_0 K/V context remained stable."
+                        + (
+                            "\nReturn five concise numbered observations confirming whether the "
+                            f"{cache_type_k}/{cache_type_v} K/V context remained stable."
+                        )
                     ),
                 }
             ],
@@ -137,7 +153,14 @@ def main() -> int:
     targets = [int(item.strip()) for item in args.targets.split(",") if item.strip()]
     wait_health(args.base_url, args.wait)
     results = [
-        run_target(args.base_url, target, args.max_tokens, args.request_timeout)
+        run_target(
+            args.base_url,
+            target,
+            args.max_tokens,
+            args.request_timeout,
+            args.cache_type_k,
+            args.cache_type_v,
+        )
         for target in targets
     ]
     rates = [

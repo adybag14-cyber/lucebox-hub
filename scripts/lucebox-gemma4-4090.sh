@@ -8,7 +8,7 @@ set -euo pipefail
 # Qwen/Laguna graphs; Gemma 4 support needs libllama's Gemma 4 + MTP runtime.
 
 MODEL="${LUCEBOX_GEMMA4_MODEL:-/mnt/c/Users/adyba/Downloads/gemma-4-31B-it-abliterated-Q4_K_M.gguf}"
-MTP_MODEL="${LUCEBOX_GEMMA4_MTP_MODEL:-/home/tdamre/models/gemma-4-31B-it-assistant-atomic-f16.gguf}"
+MTP_MODEL="${LUCEBOX_GEMMA4_MTP_MODEL:-/home/tdamre/models/gemma-4-31B-it-assistant-atomic-Q4_K_M.gguf}"
 LLAMA_SERVER="${LUCEBOX_LLAMA_SERVER:-/home/tdamre/src/atomic-llama-cpp-turboquant/build-cuda124/bin/llama-server}"
 MTP_STYLE="${LUCEBOX_GEMMA4_MTP_STYLE:-atomic}"
 
