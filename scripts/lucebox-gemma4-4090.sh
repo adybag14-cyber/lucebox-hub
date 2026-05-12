@@ -57,7 +57,7 @@ is_our_process() {
     local pid="$1"
     local args
     args="$(ps -p "$pid" -o args= 2>/dev/null || true)"
-    [[ "$args" == *"llama-server"* && "$args" == *"$MODEL"* && "$args" == *"--spec-type mtp"* ]]
+    [[ "$args" == *"llama-server"* && "$args" == *"--host $HOST"* && "$args" == *"--port $PORT"* && "$args" == *"--spec-type mtp"* ]]
 }
 
 is_running() {

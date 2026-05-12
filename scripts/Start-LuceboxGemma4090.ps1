@@ -11,6 +11,7 @@ param(
     [int] $DraftBlockSize = 4,
     [int] $BatchSize = 2048,
     [int] $UBatchSize = 512,
+    [string] $Model = '',
     [string] $CacheTypeK = 'turbo4',
     [string] $CacheTypeV = 'turbo4',
     [string] $DraftCacheTypeK = '',
@@ -83,6 +84,9 @@ function Get-LuceboxEnvPrefix {
     }
     if ($LlamaServer -ne '') {
         $pairs.LUCEBOX_LLAMA_SERVER = $LlamaServer
+    }
+    if ($Model -ne '') {
+        $pairs.LUCEBOX_GEMMA4_MODEL = $Model
     }
     if ($MtpModel -ne '') {
         $pairs.LUCEBOX_GEMMA4_MTP_MODEL = $MtpModel
