@@ -26,6 +26,11 @@ DRAFT_CACHE_TYPE_K="${LUCEBOX_GEMMA4_DRAFT_CACHE_TYPE_K:-$CACHE_TYPE_K}"
 DRAFT_CACHE_TYPE_V="${LUCEBOX_GEMMA4_DRAFT_CACHE_TYPE_V:-$CACHE_TYPE_V}"
 CACHE_RAM="${LUCEBOX_GEMMA4_CACHE_RAM:-0}"
 NO_KV_OFFLOAD="${LUCEBOX_GEMMA4_NO_KV_OFFLOAD:-0}"
+POLL="${LUCEBOX_GEMMA4_POLL:-100}"
+POLL_BATCH="${LUCEBOX_GEMMA4_POLL_BATCH:-1}"
+PRIORITY="${LUCEBOX_GEMMA4_PRIORITY:-2}"
+PRIORITY_BATCH="${LUCEBOX_GEMMA4_PRIORITY_BATCH:-2}"
+THREADS_HTTP="${LUCEBOX_GEMMA4_THREADS_HTTP:-1}"
 RUN_DIR="${LUCEBOX_GEMMA4_RUN_DIR:-$HOME/lucebox-runs}"
 PID_FILE="${LUCEBOX_GEMMA4_PID_FILE:-$RUN_DIR/lucebox-gemma4-mtp-server.pid}"
 LOG_FILE="${LUCEBOX_GEMMA4_LOG_FILE:-$RUN_DIR/lucebox-gemma4-mtp-server-$(date +%Y%m%d-%H%M%S).log}"
@@ -110,7 +115,12 @@ run_foreground() {
         --port "$PORT" \
         --jinja \
         --reasoning off \
-        --metrics
+        --metrics \
+        --poll "$POLL" \
+        --poll-batch "$POLL_BATCH" \
+        --prio "$PRIORITY" \
+        --prio-batch "$PRIORITY_BATCH" \
+        --threads-http "$THREADS_HTTP"
     )
     case "$MTP_STYLE" in
         atomic)

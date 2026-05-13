@@ -22,6 +22,14 @@ param(
     [string] $MtpModel = '',
     [string] $CacheRam = '0',
     [switch] $NoKvOffload,
+    [int] $Poll = 100,
+    [ValidateSet(0, 1)]
+    [int] $PollBatch = 1,
+    [ValidateSet(-1, 0, 1, 2, 3)]
+    [int] $Priority = 2,
+    [ValidateSet(0, 1, 2, 3)]
+    [int] $PriorityBatch = 2,
+    [int] $ThreadsHttp = 1,
     [int] $GpuClockMin = 2100,
     [int] $GpuClockMax = 2700,
     [switch] $SkipGpuClockLock
@@ -81,6 +89,11 @@ function Get-LuceboxEnvPrefix {
         LUCEBOX_GEMMA4_MTP_STYLE = $MtpStyle
         LUCEBOX_GEMMA4_CACHE_RAM = $CacheRam
         LUCEBOX_GEMMA4_NO_KV_OFFLOAD = if ($NoKvOffload) { '1' } else { '0' }
+        LUCEBOX_GEMMA4_POLL = [string] $Poll
+        LUCEBOX_GEMMA4_POLL_BATCH = [string] $PollBatch
+        LUCEBOX_GEMMA4_PRIORITY = [string] $Priority
+        LUCEBOX_GEMMA4_PRIORITY_BATCH = [string] $PriorityBatch
+        LUCEBOX_GEMMA4_THREADS_HTTP = [string] $ThreadsHttp
     }
     if ($LlamaServer -ne '') {
         $pairs.LUCEBOX_LLAMA_SERVER = $LlamaServer
