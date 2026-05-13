@@ -54,6 +54,7 @@ LUCEBOX_GEMMA4_MTP_STYLE=atomic
 LUCEBOX_GEMMA4_CTX_SIZE=70080
 LUCEBOX_GEMMA4_DRAFT_CTX_SIZE=2048
 LUCEBOX_GEMMA4_DRAFT_BLOCK_SIZE=4
+LUCEBOX_GEMMA4_GPU_LAYERS_DRAFT=all
 LUCEBOX_GEMMA4_CACHE_TYPE_K=turbo4
 LUCEBOX_GEMMA4_CACHE_TYPE_V=turbo4
 LUCEBOX_GEMMA4_DRAFT_CACHE_TYPE_K=turbo4
@@ -119,6 +120,7 @@ Current RTX 4090 measurements:
 - Forcing the target `token_embd.weight` onto CUDA with `--override-tensor token_embd.weight=CUDA0` removed the target's `CPU_Mapped model buffer` and loaded with about `525 MiB` VRAM free, but it was much slower: the same verifier fell to `10.90 tok/s` minimum and `13.14 tok/s` average. Full target tensor residency at 70k is therefore not compatible with the requested speed gate on this RTX 4090 profile.
 - Requantizing only the target token embedding down from `q6_K` to `q4_K` produced `C:\Users\adyba\Downloads\gemma-4-31B-it-abliterated-Q4_K_M-tokenemb-q4k.gguf` and let the target load fully on CUDA with about `1.2 GiB` VRAM free, but the 3-run 128-token verifier still failed badly at `14.56 tok/s` minimum and `15.57 tok/s` average. The extra VRAM headroom did not offset the cost of full target CUDA residency.
 - Starting the same `70080`/Q4_K_S/block-size-4 profile with `--no-host` did not change the major model/KV/compute buffer placement and still failed the 3-run verifier at `54.61 tok/s` minimum and `65.67 tok/s` average.
+- Passing `-ngld all` makes the assistant offload intent explicit and matches Atomic's helper script, but it did not change the effective buffers from auto mode; the same 3-run verifier reached only `55.01 tok/s` minimum and `66.08 tok/s` average.
 - `71680` context cold-prefill stability probe with a `70035`-token chat prompt completed successfully: prompt processing was `1292.04 tok/s`, decode was `23.51 tok/s`, and MTP accepted `19/31` draft tokens. This confirms the 70k prompt can answer on the Atomic TurboQuant path, but not at the requested decode floor.
 - `71680` context probe with a `65590`-token chat prompt also completed successfully: prompt processing was `1298.25 tok/s`, decode was `29.05 tok/s`, and MTP accepted `21/30` draft tokens.
 - `65536` context, Atomic TurboQuant `turbo4` K/V, `--draft-block-size 6`: loaded and answered at `22.31 tok/s`; acceptance dropped to `78/234`.
